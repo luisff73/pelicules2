@@ -12,11 +12,14 @@ function App() {
           Fylmography
         </h1>
 
+        <Pruebas />
+
         <FormNewFilm />
 
         <GridFilms />
         
         <BaseDatos />
+
      
       </div>
     </main>
@@ -28,7 +31,7 @@ const FormNewFilm = () => {
   const [year, setYear] = useState("");
   const [filmPoster, setFilmPoster] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Aquí podrías manejar el envío del formulario
     console.log("Nombre:", name);
@@ -91,27 +94,28 @@ const GridFilms = () => {
   return (
     <div className="grid grid-cols-9 gap-3 p-4">
       {peliculas.map((pelicula: Pelicula) => (
-        <div
-          key={pelicula.id}
-          className="bg-white rounded-md shadow-md overflow-hidden"
-        >
-          <img src={pelicula.image} className="w-full h-48 object-cover" />
-          <div className="p-2">
-            <h3 className="w-full font-semibold text-sm text-center">
-              {pelicula.name}
-            </h3>
-            <p className="text-gray-500 text-center">{pelicula.year}</p>
-            <button type="button">Update</button>
-          </div>
-        </div>
+        <ComponentFilm key={pelicula.id} pelicula={pelicula} />
       ))}
+    </div>
+  );
+};
+
+const ComponentFilm = ({ pelicula }: { pelicula: Pelicula }) => {
+  return (
+    <div className="bg-white rounded-md shadow-md overflow-hidden">
+      <img src={pelicula.image} className="w-full h-48 object-cover" alt={pelicula.name} />
+      <div className="p-2">
+        <h3 className="w-full font-semibold text-sm text-center">{pelicula.name}</h3>
+        <p className="text-gray-500 text-center">{pelicula.year}</p>
+        <button type="button" className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 w-full text-center mt-2">Update</button>
+      </div>
     </div>
   );
 };
 
 const BaseDatos = () => {
   useEffect(() => {
-    fetch("https://juantoman-json-server.glitch.me/peliculas")
+    fetch("https://json-pelicules.glitch.me//peliculas")  // serviror json en el fichero db.json esta la coleccion de peliculas
       .then((response) => response.json())
       .then((json) => console.log(json));
   });
@@ -122,6 +126,11 @@ interface Pelicula {
   image: string;
   name: string;
   year: number;
+}
+
+const Pruebas = () => {
+
+  return(<h1 className="color bg-red-600">hello</h1>);
 }
 
 
