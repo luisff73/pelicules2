@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";  // importamos los hooks useState y useEffect
+//useState: Permite añadir estado a un componente funcional.
+//useEffect: Permite realizar efectos secundarios en componentes, como llamadas a API o manipulaciones del DOM.
+
 import './App.css';
 import './index.css';
 
@@ -21,7 +24,7 @@ function App() {
 }
 
 const FormNewFilm = () => {
-  const [name, setName] = useState("");
+  const [name, setName] = useState(""); //eliminamos los valores
   const [year, setYear] = useState("");
   const [filmPoster, setFilmPoster] = useState("");
 
@@ -77,28 +80,59 @@ const FormNewFilm = () => {
 };
 
 const GridFilms = () => {
-  const [peliculas, setPeliculas] = useState<Pelicula[]>([]);
+  const [peliculas, setPeliculas] = useState<Pelicula[]>([]); //Creamos una variable tipo array de peliculas que esta vacio 
+  // setPeliculas es una funcion para actualizar el estado
 
-  useEffect(() => {
-    fetch("https://json-pelicules.glitch.me/peliculas")
-      .then((response) => response.json())
-      .then((data) => setPeliculas(data))
-      .catch((error) => console.error("Error al cargar las películas:", error));
+  useEffect(() => {  //useEffect es un hook que en este caso nos permite hacer una solicitud API para cargar las peliculas.
+    fetch("https://json-pelicules.glitch.me/peliculas")  //hacemos una peticion fetch a la URL del servidor json.
+      .then((response) => response.json())  // convertimos la petición de un json al formato Javascript
+      .then((data) => {
+        setPeliculas(data); // actualizamos los datos de las películas
+        console.log("Películas cargadas:", data); // aquí es donde ves los datos actualizados
+      }) // actualizamos los datos de las peliculas
+      .catch((error) => console.error("Error al cargar las películas:", error)); // esto es control de errores.
   }, []);
 
-  return (
+    // Función para eliminar una película del estado
+    // no puedo sacarla fuera de GridFilms por el setPeliculas.
+    const eliminarPelicula = (id: number) => {
+      console.log (id);
+      console.log (peliculas);
+      fetch(`https://json-pelicules.glitch.me/peliculas/${id}`, { method: 'DELETE' }) // borra la pelicula del json ojo con las comillas tienen que ser invertidas porque pasamos un parametro (id)
+     .then ((response) => {
+        if (response.ok) {
+//////////////////////// REVISAR ESTO NO ESTA ELIMINANDO LAS PELICULAS DEL JSON /////////////////////////////////////
+
+          setPeliculas(peliculas.filter((pelicula) => pelicula.id !== id)); // esto elimina la pelicula del grid
+          console.log ('registro borrado correctamente');
+          fetch("https://json-pelicules.glitch.me/peliculas")
+          .then((response) => response.json())
+          .then((data) => setPeliculas(data))
+          .catch((error) => console.error("Error al cargar las películas:", error));
+        }
+      })
+      .catch((error) => console.log ("Ha habido un error al eliminar la pelicula: ",error));
+    };
+
+  return (  //lo que devolvera GridFilms (las peliculas)
     <div className="grid grid-cols-9 gap-3 p-4">
-      {peliculas.map((pelicula: Pelicula) => (
-        <ComponentFilm key={pelicula.id} pelicula={pelicula} />
+      {peliculas.map((pelicula: Pelicula) => (  
+        <ComponentFilm            // componente al que se le pasan tres parametros
+        key={pelicula.id}        //key es de react lo utilizamos para recoger el id de la pelicula.
+        pelicula={pelicula}      //pelicula que es el objeto completo de peliculas
+        onEliminar={()=>eliminarPelicula(pelicula.id)}/> //onEliminar es una funcion que elimina el id de pelicula.
       ))}
     </div>
   );
 };
 
-const ComponentFilm = ({ pelicula }: { pelicula: Pelicula }) => {
+const ComponentFilm = ({ pelicula, onEliminar }: { pelicula: Pelicula; onEliminar:()=>void }) => {  
+//pelicula contiene los datos de las peliculas 
+//onEliminar es una funcion que se ejecutara para eliminar la pelicula
+//pelicula:Pelicula eslo que define la estructura del objeto pelicula (id, name, year, image)
   return (
     <div className="bg-white rounded-md shadow-md overflow-hidden relative">
-      <EliminarButton/>   
+      <EliminarButton onEliminar={onEliminar}/>   
       <img src={pelicula.image} className="w-full h-48 object-cover" />
       <div className="p-2">
         <h3 className="w-full font-semibold text-sm text-center">{pelicula.name}</h3>
@@ -109,10 +143,11 @@ const ComponentFilm = ({ pelicula }: { pelicula: Pelicula }) => {
   );
 };
 
-function EliminarButton() { //funcion que crea un componente boton para eliminar
+function EliminarButton({onEliminar}: {onEliminar:()=> void}) { //funcion que crea un componente boton para eliminar
   return(
   <div className="flex justify-end">
-  <button type="button" id="eliminar" className="absolute right-2 text-white hover:bg-blue-600 hover:text-white rounded-full p-1 w-" >X</button>
+  <button type="button" onClick={onEliminar} //llama a la funcion para eliminar la pelicula
+  className="absolute right-2 text-white hover:bg-blue-600 hover:text-white rounded-full p-1 w-" >X</button>
   </div>
   );
 };
@@ -136,9 +171,9 @@ interface Pelicula {
   year: number;
 }
 
-const Pruebas = () => {
-  return (<h1 className="color bg-red-600">hello</h1>);
-}
+// const Pruebas = () => {
+//   return (<h1 className="color bg-red-600">hello</h1>);
+// }
 
 export default App;
 
