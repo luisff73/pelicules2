@@ -14,8 +14,8 @@ function App() {
         </h1>
 
         {/* <Pruebas /> */}
-        <FormNewFilm />
-        <GridFilms />
+        <FormNewFilm /> 
+        <GridFilms /> 
 
       
       </div>
@@ -23,25 +23,28 @@ function App() {
   );
 }
 
-const FormNewFilm = () => {
+const FormNewFilm = () => {   // carga el formulario para crear peliculas
+
   const [name, setName] = useState(""); //eliminamos los valores
   const [year, setYear] = useState("");
   const [filmPoster, setFilmPoster] = useState("");
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => { //esta funcion "handleSubmit" se ejecuta cuando enviemos el formulario
     e.preventDefault();
+    console.log("Formulario enviado");
     console.log("Nombre:", name);
     console.log("Año:", year);
     console.log("Film Poster:", filmPoster);
-
+    //crearPelicula(); // ejecuta la funcion que creara la pelicula
     setName("");
     setYear("");
     setFilmPoster("");
+    //console.log("filmposter despues de vaciar : ", filmPoster); //deberia de devorlver null, pero devuelve valor no se porque
   };
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit}  // Cuando enviamos el formulario se ejecuta la funcion hanleSubmit
       className="flex flex-col gap-6 p-8 max-w-md mx-auto bg-gray-100 rounded-md mb-12"
     >
       <div className="flex gap-4 w-full">
@@ -59,9 +62,9 @@ const FormNewFilm = () => {
           Año:
           <input
             type="text"
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-            className="p-2 border border-gray-300 rounded-md w-full"
+            value={year}  // define el campo de origen como year del json
+            onChange={(e) => setYear(e.target.value)} //ejecuta la funcion "e" que actualiza el campo year.. de (e.target.value)
+            className="p-2 border border-gray-300 rounded-md w-full" // clase tailwind
           />
         </label>
       </div>
@@ -70,11 +73,12 @@ const FormNewFilm = () => {
         Film Poster:
         <input
           type="text"
+          value={filmPoster}
           onChange={(e) => setFilmPoster(e.target.value)}
           className="p-2 border border-gray-300 rounded-md w-full"
         />
       </label>
-      <CrearButton />
+      <CrearButton />  
     </form>
   );
 };
@@ -104,10 +108,10 @@ const GridFilms = () => {
 //////////////////////// REVISAR ESTO NO ESTA ELIMINANDO LAS PELICULAS DEL JSON /////////////////////////////////////
 
           setPeliculas(peliculas.filter((pelicula) => pelicula.id !== id)); // esto elimina la pelicula del grid
-          console.log ('registro borrado correctamente');
           fetch("https://json-pelicules.glitch.me/peliculas")
           .then((response) => response.json())
           .then((data) => setPeliculas(data))
+          .then(() => {console.log('Registro borrado correctamente');})
           .catch((error) => console.error("Error al cargar las películas:", error));
         }
       })
@@ -153,16 +157,52 @@ function EliminarButton({onEliminar}: {onEliminar:()=> void}) { //funcion que cr
 };
 function UpdateButton() { //funcion que crea un componente boton para Actualizar
   return(
-    <button type="button" id="update" className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 w-full text-center mt-2">Update</button>
+    <button type="submit" id="update" className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 w-full text-center mt-2">Update</button>
   );
 };
 
 function CrearButton() { //funcion que crea un componente boton para Crear
   return(
-    <button type="submit" id="Crear" className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"> Crear Película </button>
+    
+    <button type="submit" 
+    id="Crear" 
+    onClick={() => alert("hola")}
+    className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"> Crear Película </button>
+    
   );
 };
+const crearPelicula = () => {
+  const nuevaPelicula = {
+    id: Date.now(), // Genera un ID único (aunque esto es simple, en producción deberías manejarlo en el servidor)
+    name,
+    year: parseInt(year), // Convertimos el año a número
+    image: filmPoster,
+  };
 
+  // Realiza la petición POST al servidor
+  fetch("https://json-pelicules.glitch.me/peliculas", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(nuevaPelicula),
+  })
+    .then((response) => {
+      if (response.ok) {
+        return response.json();
+      }
+      throw new Error("Error al añadir la película");
+    })
+    .then((data) => {
+      console.log("Película añadida:", data);
+
+      // También podríamos volver a cargar la lista de películas
+
+    })
+    .catch((error) => {
+      console.error("Ha habido un error:", error);
+    });
+};
 
 interface Pelicula {
   id: number;
