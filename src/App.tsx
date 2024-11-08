@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";  // importamos los hooks useState y useEffect
-//useState: Permite añadir estado a un componente funcional.
-//useEffect: Permite realizar efectos secundarios en componentes, como llamadas a API o manipulaciones del DOM.
+import React, { useState, useEffect } from "react"; // Importamos los hooks useState y useEffect
+import './index.css';  // Importamos el fichero de estilos css personalizado que carga los estilos de tailwind.
 
-import './App.css';
-import './index.css';
-
+// Componente principal de la aplicación
 function App() {
+  const [peliculas, setPeliculas] = useState<Pelicula[]>([]); // Estado para almacenar las películas "peliculas" es una variable que almacenara las peliculas y setPeliculas lo utilizamos para actualizar el valor de la variable Peliculas
+  const [peliculaSeleccionada, setPeliculaSeleccionada] = useState<Pelicula | null>(null); // Estado para almacenar la película seleccionada para actualizar la asignamos a null al principio.
+
   return (
     <main className="flex flex-col items-center gap-8 py-16 max-w-[1280px] mx-auto bg-black">
       <div>
@@ -13,38 +13,60 @@ function App() {
           Fylmography
         </h1>
 
-        {/* <Pruebas /> */}
-        <FormNewFilm /> 
-        <GridFilms /> 
-
-      
+        {/* Cargamos el componente FormNewFilm que es un Formulario para crear o actualizar películas y le pasamos los parametros setPeliculas y peliccula seleccionada*/}
+        <FormNewFilm 
+          setPeliculas={setPeliculas} 
+          peliculaSeleccionada={peliculaSeleccionada} // Le pasamos la película seleccionada si está en edición
+        />
+        {/* Grid que muestra todas las películas */}
+        <GridFilms 
+          peliculas={peliculas} 
+          setPeliculas={setPeliculas} 
+          setPeliculaSeleccionada={setPeliculaSeleccionada} // Cuando se hace click en actualizar, seteamos la película seleccionada
+        />
       </div>
     </main>
   );
 }
 
-const FormNewFilm = () => {   // carga el formulario para crear peliculas
+// Formulario para crear una nueva película o actualizar una existente
+// al FormnewFilm le pasamos los parametros setPeliculas y peliculaSeleccionada 
+// react.dispatch... es un tipo que describe una función que se usa para actualizar el estado en React. en este caso es un array de peliculas
+const FormNewFilm = ({ setPeliculas, peliculaSeleccionada }: { setPeliculas: React.Dispatch<React.SetStateAction<Pelicula[]>>; peliculaSeleccionada: Pelicula | null }) => {
+  
+  const [name, setName] = useState(peliculaSeleccionada ? peliculaSeleccionada.name : "");  // Estado para el nombre
+  const [year, setYear] = useState(peliculaSeleccionada ? peliculaSeleccionada.year.toString() : "");  // Estado para el año, lo convertimos a string
+  const [filmPoster, setFilmPoster] = useState(peliculaSeleccionada ? peliculaSeleccionada.image : "");  // Estado para el poster de la película
 
-  const [name, setName] = useState(""); //eliminamos los valores
-  const [year, setYear] = useState("");
-  const [filmPoster, setFilmPoster] = useState("");
+  // Usamos useEffect para actualizar los campos cuando cambie la película seleccionada
+  useEffect(() => {
+    if (peliculaSeleccionada) {
+      setName(peliculaSeleccionada.name);
+      setYear(peliculaSeleccionada.year.toString());
+      setFilmPoster(peliculaSeleccionada.image);
+    }
+  }, [peliculaSeleccionada]);  // Esto se ejecutará cada vez que cambie peliculaSeleccionada
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => { //esta funcion "handleSubmit" se ejecuta cuando enviemos el formulario
-    e.preventDefault();
-    console.log("Formulario enviado");
-    console.log("Nombre:", name);
-    console.log("Año:", year);
-    console.log("Film Poster:", filmPoster);
-    //crearPelicula(); // ejecuta la funcion que creara la pelicula
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // Evitamos el comportamiento por defecto del formulario
+
+    
+    if (peliculaSeleccionada) { // Si tenemos una película seleccionada, la actualizamos
+      actualizarPelicula(peliculaSeleccionada.id, name, year, filmPoster, setPeliculas);
+    } else {
+      crearPelicula(name, year, filmPoster, setPeliculas);  // Si no, creamos una nueva
+    }
+
+    // Limpiar los campos del formulario después de enviar
     setName("");
     setYear("");
     setFilmPoster("");
-    //console.log("filmposter despues de vaciar : ", filmPoster); //deberia de devorlver null, pero devuelve valor no se porque
   };
 
   return (
     <form
-      onSubmit={handleSubmit}  // Cuando enviamos el formulario se ejecuta la funcion hanleSubmit
+      onSubmit={handleSubmit}
       className="flex flex-col gap-6 p-8 max-w-md mx-auto bg-gray-100 rounded-md mb-12"
     >
       <div className="flex gap-4 w-full">
@@ -53,7 +75,7 @@ const FormNewFilm = () => {   // carga el formulario para crear peliculas
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}  // evento onChange actualiza el campo cada vez que cambia (e.target.value) es el valor que escribe el usuario
+            onChange={(e) => setName(e.target.value)}  // Actualizamos el nombre con el valor del input
             className="p-2 border border-gray-300 rounded-md"
           />
         </label>
@@ -62,9 +84,9 @@ const FormNewFilm = () => {   // carga el formulario para crear peliculas
           Año:
           <input
             type="text"
-            value={year}  // define el campo de origen como year del json
-            onChange={(e) => setYear(e.target.value)} //ejecuta la funcion "e" que actualiza el campo year.. de (e.target.value)
-            className="p-2 border border-gray-300 rounded-md w-full" // clase tailwind
+            value={year}
+            onChange={(e) => setYear(e.target.value)}  // Actualizamos el año con el valor del input
+            className="p-2 border border-gray-300 rounded-md w-full"
           />
         </label>
       </div>
@@ -74,112 +96,112 @@ const FormNewFilm = () => {   // carga el formulario para crear peliculas
         <input
           type="text"
           value={filmPoster}
-          onChange={(e) => setFilmPoster(e.target.value)}
+          onChange={(e) => setFilmPoster(e.target.value)}  // Actualizamos la URL del poster con el valor del input
           className="p-2 border border-gray-300 rounded-md w-full"
         />
       </label>
-      <CrearButton />  
+
+      <button
+        type="submit"
+        className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
+      >
+        {peliculaSeleccionada ? "Actualizar Película" : "Crear Película"}
+      </button>
     </form>
   );
 };
 
-const GridFilms = () => {
-  const [peliculas, setPeliculas] = useState<Pelicula[]>([]); //Creamos una variable tipo array de peliculas que esta vacio 
-  // setPeliculas es una funcion para actualizar el estado
 
-  useEffect(() => {  //useEffect es un hook que en este caso nos permite hacer una solicitud API para cargar las peliculas.
-    fetch("https://json-pelicules.glitch.me/peliculas")  //hacemos una peticion fetch a la URL del servidor json.
-      .then((response) => response.json())  // convertimos la petición de un json al formato Javascript
+// Componente que muestra la lista de películas
+const GridFilms = ({ peliculas, setPeliculas, setPeliculaSeleccionada }: { peliculas: Pelicula[]; setPeliculas: React.Dispatch<React.SetStateAction<Pelicula[]>>; setPeliculaSeleccionada: React.Dispatch<React.SetStateAction<Pelicula | null>> }) => {
+
+  // useEffect se usa para cargar las películas cuando el componente se monta
+  useEffect(() => {
+    fetch("https://json-pelicules.glitch.me/peliculas")  // Realizamos una petición fetch para obtener las películas
+      .then((response) => response.json())  // Convertimos la respuesta en JSON
       .then((data) => {
-        setPeliculas(data); // actualizamos los datos de las películas
-        console.log("Películas cargadas:", data); // aquí es donde ves los datos actualizados
-      }) // actualizamos los datos de las peliculas
-      .catch((error) => console.error("Error al cargar las películas:", error)); // esto es control de errores.
-  }, []);
+        setPeliculas(data);  // Actualizamos el estado con las películas recibidas
+      })
+      .catch((error) => console.error("Error al cargar las películas:", error)); // Manejo de errores
+  }, []);  // El array vacío significa que solo se ejecuta una vez al montar el componente
 
-    // Función para eliminar una película del estado
-    // no puedo sacarla fuera de GridFilms por el setPeliculas.
-    const eliminarPelicula = (id: number) => {
-      console.log (id);
-      console.log (peliculas);
-      fetch(`https://json-pelicules.glitch.me/peliculas/${id}`, { method: 'DELETE' }) // borra la pelicula del json ojo con las comillas tienen que ser invertidas porque pasamos un parametro (id)
-     .then ((response) => {
+  // Función para eliminar una película
+  const eliminarPelicula = (id: number) => {
+    fetch(`https://json-pelicules.glitch.me/peliculas/${id}`, { method: 'DELETE' })  // Enviamos la petición DELETE para eliminar la película
+      .then((response) => {
         if (response.ok) {
-//////////////////////// REVISAR ESTO NO ESTA ELIMINANDO LAS PELICULAS DEL JSON /////////////////////////////////////
-
-          setPeliculas(peliculas.filter((pelicula) => pelicula.id !== id)); // esto elimina la pelicula del grid
-          fetch("https://json-pelicules.glitch.me/peliculas")
-          .then((response) => response.json())
-          .then((data) => setPeliculas(data))
-          .then(() => {console.log('Registro borrado correctamente');})
-          .catch((error) => console.error("Error al cargar las películas:", error));
+          // Si la eliminación es correcta, actualizamos el estado para eliminar la película de la lista
+          setPeliculas(peliculas.filter((pelicula) => pelicula.id !== id));
         }
       })
-      .catch((error) => console.log ("Ha habido un error al eliminar la pelicula: ",error));
-    };
+      .catch((error) => console.log("Error al eliminar la película:", error));
+  };
 
-  return (  //lo que devolvera GridFilms (las peliculas)
+  return (  // rellena el grid de peliculas con el componentFilm
     <div className="grid grid-cols-9 gap-3 p-4">
-      {peliculas.map((pelicula: Pelicula) => (  
-        <ComponentFilm            // componente al que se le pasan tres parametros
-        key={pelicula.id}        //key es de react lo utilizamos para recoger el id de la pelicula.
-        pelicula={pelicula}      //pelicula que es el objeto completo de peliculas
-        onEliminar={()=>eliminarPelicula(pelicula.id)}/> //onEliminar es una funcion que elimina el id de pelicula.
+      {peliculas.map((pelicula) => (
+        <ComponentFilm
+          key={pelicula.id}  // Necesario para que React reconozca los elementos únicos
+          pelicula={pelicula}
+          onEliminar={() => eliminarPelicula(pelicula.id)}  // Llamamos a la función eliminarPelicula al hacer click en eliminar
+          onUpdate={() => setPeliculaSeleccionada(pelicula)}  // Establecemos la película seleccionada para actualizar
+        />
       ))}
     </div>
   );
 };
 
-const ComponentFilm = ({ pelicula, onEliminar }: { pelicula: Pelicula; onEliminar:()=>void }) => {  
-//pelicula contiene los datos de las peliculas 
-//onEliminar es una funcion que se ejecutara para eliminar la pelicula
-//pelicula:Pelicula eslo que define la estructura del objeto pelicula (id, name, year, image)
+// Componente para cada película que muestra sus detalles y botones
+const ComponentFilm = ({ pelicula, onEliminar, onUpdate }: { pelicula: Pelicula; onEliminar: () => void; onUpdate: () => void }) => {
   return (
     <div className="bg-white rounded-md shadow-md overflow-hidden relative">
-      <EliminarButton onEliminar={onEliminar}/>   
+      <EliminarButton onEliminar={onEliminar} />
       <img src={pelicula.image} className="w-full h-48 object-cover" />
       <div className="p-2">
         <h3 className="w-full font-semibold text-sm text-center">{pelicula.name}</h3>
         <p className="text-gray-500 text-center">{pelicula.year}</p>
-        <UpdateButton/>
+        <UpdateButton onClick={onUpdate}   />
       </div>
     </div>
   );
 };
 
-function EliminarButton({onEliminar}: {onEliminar:()=> void}) { //funcion que crea un componente boton para eliminar
-  return(
-  <div className="flex justify-end">
-  <button type="button" onClick={onEliminar} //llama a la funcion para eliminar la pelicula
-  className="absolute right-2 text-white hover:bg-blue-600 hover:text-white rounded-full p-1 w-" >X</button>
-  </div>
+// Botón de eliminar
+function EliminarButton({ onEliminar }: { onEliminar: () => void }) {
+  return (
+    <div className="flex justify-end">
+      <button
+        type="button"
+        onClick={onEliminar}  // Llamamos a la función eliminar cuando se hace click
+        className="absolute right-2 text-white hover:bg-blue-600 hover:text-white rounded-full p-1"
+      >
+        X
+      </button>
+    </div>
   );
-};
-function UpdateButton() { //funcion que crea un componente boton para Actualizar
-  return(
-    <button type="submit" id="update" className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 w-full text-center mt-2">Update</button>
-  );
-};
+}
 
-function CrearButton() { //funcion que crea un componente boton para Crear
-  return(
-    
-    <button type="submit" 
-    id="Crear" 
-    onClick={() => alert("hola")}
-    className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"> Crear Película </button>
-    
+// Botón de actualizar
+function UpdateButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}  // Llamamos a la función onUpdate cuando se hace click
+      className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 w-full text-center mt-2"
+    >
+      Update
+    </button>
   );
-};
-const crearPelicula = () => {
+}
+
+// Función para crear una nueva película
+const crearPelicula = (name: string, year: string, filmPoster: string, setPeliculas: React.Dispatch<React.SetStateAction<Pelicula[]>>) => {
   const nuevaPelicula = {
-    id: Date.now(), // Genera un ID único (aunque esto es simple, en producción deberías manejarlo en el servidor)
     name,
-    year: parseInt(year), // Convertimos el año a número
-    image: filmPoster,
+    year: parseInt(year),  // Convertimos el año a número
+    image: filmPoster,  // URL del poster
   };
 
-  // Realiza la petición POST al servidor
+  // Realizamos la solicitud POST para crear la nueva película
   fetch("https://json-pelicules.glitch.me/peliculas", {
     method: "POST",
     headers: {
@@ -187,23 +209,48 @@ const crearPelicula = () => {
     },
     body: JSON.stringify(nuevaPelicula),
   })
-    .then((response) => {
-      if (response.ok) {
-        return response.json();
-      }
-      throw new Error("Error al añadir la película");
-    })
+    .then((response) => response.json())  // Si la respuesta es exitosa, devolvemos los datos de la nueva película
     .then((data) => {
-      console.log("Película añadida:", data);
-
-      // También podríamos volver a cargar la lista de películas
-
+      setPeliculas((prevPeliculas) => [...prevPeliculas, data]);  // Actualizamos el estado con la nueva película
     })
-    .catch((error) => {
-      console.error("Ha habido un error:", error);
-    });
+    .catch((error) => console.error("Error al crear la película:", error));
 };
 
+// Función para actualizar una película
+const actualizarPelicula = (
+  id: number,
+  name: string,
+  year: string,
+  filmPoster: string,
+  setPeliculas: React.Dispatch<React.SetStateAction<Pelicula[]>>
+) => {
+  const updatedPelicula = {
+    id,
+    name,
+    year: parseInt(year),  // Convertimos el año a número
+    image: filmPoster,
+  };
+
+  // Realizamos la solicitud PUT para actualizar la película
+  fetch(`https://json-pelicules.glitch.me/peliculas/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updatedPelicula),
+  })
+    .then((response) => response.json())  // Si la respuesta es exitosa, devolvemos los datos actualizados
+    .then(() => {
+      setPeliculas((prevPeliculas) =>
+        prevPeliculas.map((pelicula) =>
+          pelicula.id === id ? { ...pelicula, ...updatedPelicula } : pelicula
+        )
+      );
+    })
+    .catch((error) => console.error("Error al actualizar la película:", error));
+};
+
+// aqui definimos la colección pelicula para evitar errores posteriores en typescript.
 interface Pelicula {
   id: number;
   image: string;
@@ -211,9 +258,4 @@ interface Pelicula {
   year: number;
 }
 
-// const Pruebas = () => {
-//   return (<h1 className="color bg-red-600">hello</h1>);
-// }
-
 export default App;
-
