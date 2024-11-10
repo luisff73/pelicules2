@@ -5,9 +5,11 @@ import EliminarButton from './EliminarButton.tsx';
 
 // Componente principal de la aplicación
 function App() {
-  const [peliculas, setPeliculas] = useState<Pelicula[]>([]); // Estado para almacenar las películas "peliculas" es una variable que almacenara las peliculas y setPeliculas lo utilizamos para actualizar el valor de la variable Peliculas
-  const [peliculaSeleccionada, setPeliculaSeleccionada] = useState<Pelicula | null>(null); // Estado para almacenar la película seleccionada para actualizar la asignamos a null al principio.
-
+  const [peliculas, setPeliculas] = useState<interfacePelicula[]>([]); // Estado para almacenar las películas "peliculas" es una variable que almacenara las peliculas y setPeliculas lo utilizamos para actualizar el valor de la variable Peliculas
+  const [peliculaSeleccionada, setPeliculaSeleccionada] = useState<interfacePelicula | null>(null); // Estado para almacenar la película seleccionada para actualizar la asignamos a null al principio.
+  const [generos, setGeneros] = useState<interfaceGeneros[]>([]);
+  const [generoSeleccionado, setGeneroSeleccionado] = useState<interfaceGeneros | null>(null);
+ 
   return (
     <main className="flex flex-col items-center gap-8 py-16 max-w-[1280px] mx-auto bg-black">
       <div>
@@ -21,7 +23,17 @@ function App() {
           peliculaSeleccionada={peliculaSeleccionada} // Le pasamos la película seleccionada si está en edición
         />
 
-        
+        <AgregarGenero setGeneros={setGeneros} crearGenero={crearGenero} />
+
+
+
+        {/* Grid que muestra todos los generos */}
+        <GridFilmsGeneros
+         generos={generos}
+         setGeneros={setGeneros}
+         setGeneroSeleccionado={setGeneroSeleccionado}
+         /> 
+
         {/* Grid que muestra todas las películas */}
         <GridFilms 
           peliculas={peliculas} 
@@ -37,7 +49,7 @@ function App() {
 // Formulario para crear una nueva película o actualizar una existente
 // al FormnewFilm le pasamos los parametros setPeliculas y peliculaSeleccionada 
 // react.dispatch... es un tipo que describe una función que se usa para actualizar el estado en React. en este caso es un array de peliculas
-const FormNewFilm = ({ setPeliculas, peliculaSeleccionada }: { setPeliculas: React.Dispatch<React.SetStateAction<Pelicula[]>>; peliculaSeleccionada: Pelicula | null }) => {
+const FormNewFilm = ({ setPeliculas, peliculaSeleccionada }: { setPeliculas: React.Dispatch<React.SetStateAction<interfacePelicula[]>>; peliculaSeleccionada: interfacePelicula | null }) => {
   
   const [name, setName] = useState(peliculaSeleccionada ? peliculaSeleccionada.name : "");  // Estado para el nombre
   const [year, setYear] = useState(peliculaSeleccionada ? peliculaSeleccionada.year.toString() : "");  // Estado para el año, lo convertimos a string
@@ -120,7 +132,7 @@ const FormNewFilm = ({ setPeliculas, peliculaSeleccionada }: { setPeliculas: Rea
 
 
 // Componente que muestra la lista de películas
-const GridFilms = ({ peliculas, setPeliculas, setPeliculaSeleccionada }: { peliculas: Pelicula[]; setPeliculas: React.Dispatch<React.SetStateAction<Pelicula[]>>; setPeliculaSeleccionada: React.Dispatch<React.SetStateAction<Pelicula | null>> }) => {
+const GridFilms = ({ peliculas, setPeliculas, setPeliculaSeleccionada }: { peliculas: interfacePelicula[]; setPeliculas: React.Dispatch<React.SetStateAction<interfacePelicula[]>>; setPeliculaSeleccionada: React.Dispatch<React.SetStateAction<interfacePelicula | null>> }) => {
 
   // useEffect se usa para cargar las películas cuando el componente se monta
   useEffect(() => {
@@ -144,6 +156,7 @@ const GridFilms = ({ peliculas, setPeliculas, setPeliculaSeleccionada }: { pelic
       .catch((error) => console.log("Error al eliminar la película:", error));
   };
 
+  
   return (  // rellena el grid de peliculas con el componentFilm
     <div className="grid grid-cols-5 gap-3 p-4">
       {peliculas.map((pelicula) => (
@@ -158,8 +171,109 @@ const GridFilms = ({ peliculas, setPeliculas, setPeliculaSeleccionada }: { pelic
   );
 };
 
+// Función para crear un nuevo género
+
+const crearGenero = (name: string, setGeneros: React.Dispatch<React.SetStateAction<interfaceGeneros[]>>) => {
+  const nuevoGenero = { name };
+
+  fetch("https://json-pelicules.glitch.me/generos", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(nuevoGenero),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      setGeneros((prevGeneros) => [...prevGeneros, data]);
+    })
+    .catch((error) => console.error("Error al crear el género:", error));
+};
+
+const AgregarGenero = ({ setGeneros, crearGenero }: { setGeneros: React.Dispatch<React.SetStateAction<interfaceGeneros[]>>; crearGenero: (name: string, setGeneros: React.Dispatch<React.SetStateAction<interfaceGeneros[]>>) => void }) => {
+  const [nombreGenero, setNombreGenero] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (nombreGenero) {
+      crearGenero(nombreGenero, setGeneros);  // Llamar a la función crearGenero con los dos parámetros
+      setNombreGenero("");  // Limpiar el campo de texto
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex gap-2 items-center mb-8">
+      <input
+        type="text"
+        value={nombreGenero}
+        onChange={(e) => setNombreGenero(e.target.value)}
+        className="p-2 border border-gray-800 rounded-md w-4/5 mx-3"
+        placeholder="Nuevo género"
+      />
+      <button type="submit" className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">
+        
+        Agregar Género
+      </button>
+    </form>
+  );
+};
+
+
+
+
+
+
+
+
+
+// Componente que muestra la lista de Generos
+const GridFilmsGeneros = ({ generos, setGeneros, setGeneroSeleccionado }: { generos: interfaceGeneros[]; setGeneros: React.Dispatch<React.SetStateAction<interfaceGeneros[]>>; setGeneroSeleccionado: React.Dispatch<React.SetStateAction<interfaceGeneros | null>> }) => {
+
+  // useEffect se usa para cargar las películas cuando el componente se monta
+  useEffect(() => {
+    fetch("https://json-pelicules.glitch.me/generos")  // Realizamos una petición fetch para obtener los generos
+      .then((response) => response.json())  // Convertimos la respuesta en JSON
+      .then((data) => {
+        setGeneros(data);  // Actualizamos el estado con las películas recibidas
+      })
+      .catch((error) => console.error("Error al cargar los generos:", error)); // Manejo de errores
+  }, []);  // El array vacío significa que solo se ejecuta una vez al montar el componente
+
+  // Función para eliminar una película
+  const eliminarGeneros = (id: number) => {
+    fetch(`https://json-pelicules.glitch.me/generos/${id}`, { method: 'DELETE' })  // Enviamos la petición DELETE para eliminar la película
+      .then((response) => {
+        if (response.ok) {
+          // Si la eliminación es correcta, actualizamos el estado para eliminar el genero de la lista
+          setGeneros(generos.filter((generos) => generos.id !== id));
+        }
+      })
+      .catch((error) => console.log("Error al eliminar el genero:", error));
+  };
+
+
+
+
+  
+  return (  // rellena el grid de generos con el componente Generos
+    <div className="grid grid-cols-5 gap-3 p-4">
+      {generos.map((genero) => (
+        <ComponentGeneros
+          key={genero.id}  // Necesario para que React reconozca los elementos únicos
+          generos={genero}  // Usamos el nombre singular para la iteración
+          onEliminar={() => eliminarGeneros(genero.id)}  // Llamamos a la función eliminarGenero
+        />
+      ))}
+    </div>
+  );
+  
+};
+
+
+
+
 // Componente para cada película que muestra sus detalles y botones
-const ComponentFilm = ({ pelicula, onEliminar, onUpdate }: { pelicula: Pelicula; onEliminar: () => void; onUpdate: () => void }) => {
+const ComponentFilm = ({ pelicula, onEliminar, onUpdate }: { pelicula: interfacePelicula; onEliminar: () => void; onUpdate: () => void }) => {
   return (
     <div className="bg-white rounded-md shadow-md overflow-hidden relative">
       <EliminarButton onEliminar={onEliminar} />  {/*Esta funcion esta en el fichero EliminarButton.tsx para reutilizarla.*/}
@@ -173,6 +287,23 @@ const ComponentFilm = ({ pelicula, onEliminar, onUpdate }: { pelicula: Pelicula;
   );
 };
 
+
+const ComponentGeneros = ({
+  generos,
+  onEliminar,
+}: {
+  generos: interfaceGeneros;
+  onEliminar: () => void;
+}) => {
+  return (
+    <div className="bg-white rounded-md shadow-md overflow-hidden relative">
+      <EliminarButton onEliminar={onEliminar} />
+      <div className="p-2">
+        <h3 className="w-full font-semibold text-sm text-center">{generos.name}</h3>
+      </div>
+    </div>
+  );
+};
 
 
 // Botón de actualizar
@@ -188,7 +319,7 @@ function UpdateButton({ onClick }: { onClick: () => void }) {
 }
 
 // Función para crear una nueva película
-const crearPelicula = (name: string, year: string, filmPoster: string, setPeliculas: React.Dispatch<React.SetStateAction<Pelicula[]>>) => {
+const crearPelicula = (name: string, year: string, filmPoster: string, setPeliculas: React.Dispatch<React.SetStateAction<interfacePelicula[]>>) => {
   const nuevaPelicula = {
     name,
     year: parseInt(year),  // Convertimos el año a número
@@ -216,7 +347,7 @@ const actualizarPelicula = (
   name: string,
   year: string,
   filmPoster: string,
-  setPeliculas: React.Dispatch<React.SetStateAction<Pelicula[]>>
+  setPeliculas: React.Dispatch<React.SetStateAction<interfacePelicula[]>>
 ) => {
   const updatedPelicula = {
     id,
@@ -245,11 +376,16 @@ const actualizarPelicula = (
 };
 
 // aqui definimos la colección pelicula para evitar errores posteriores en typescript.
-interface Pelicula {
+interface interfacePelicula {
   id: number;
   image: string;
   name: string;
   year: number;
+}
+
+interface interfaceGeneros {
+  id:number;
+  name:string;
 }
 
 export default App;
