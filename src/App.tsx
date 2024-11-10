@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react"; // Importamos los hooks useState y useEffect
 import './index.css';  // Importamos el fichero de estilos css personalizado que carga los estilos de tailwind.
+import EliminarButton from './EliminarButton.tsx'; 
+
 
 // Componente principal de la aplicación
 function App() {
@@ -18,6 +20,8 @@ function App() {
           setPeliculas={setPeliculas} 
           peliculaSeleccionada={peliculaSeleccionada} // Le pasamos la película seleccionada si está en edición
         />
+
+        
         {/* Grid que muestra todas las películas */}
         <GridFilms 
           peliculas={peliculas} 
@@ -25,6 +29,7 @@ function App() {
           setPeliculaSeleccionada={setPeliculaSeleccionada} // Cuando se hace click en actualizar, seteamos la película seleccionada
         />
       </div>
+
     </main>
   );
 }
@@ -107,6 +112,8 @@ const FormNewFilm = ({ setPeliculas, peliculaSeleccionada }: { setPeliculas: Rea
       >
         {peliculaSeleccionada ? "Actualizar Película" : "Crear Película"}
       </button>
+
+      
     </form>
   );
 };
@@ -138,7 +145,7 @@ const GridFilms = ({ peliculas, setPeliculas, setPeliculaSeleccionada }: { pelic
   };
 
   return (  // rellena el grid de peliculas con el componentFilm
-    <div className="grid grid-cols-9 gap-3 p-4">
+    <div className="grid grid-cols-5 gap-3 p-4">
       {peliculas.map((pelicula) => (
         <ComponentFilm
           key={pelicula.id}  // Necesario para que React reconozca los elementos únicos
@@ -155,7 +162,7 @@ const GridFilms = ({ peliculas, setPeliculas, setPeliculaSeleccionada }: { pelic
 const ComponentFilm = ({ pelicula, onEliminar, onUpdate }: { pelicula: Pelicula; onEliminar: () => void; onUpdate: () => void }) => {
   return (
     <div className="bg-white rounded-md shadow-md overflow-hidden relative">
-      <EliminarButton onEliminar={onEliminar} />
+      <EliminarButton onEliminar={onEliminar} />  {/*Esta funcion esta en el fichero EliminarButton.tsx para reutilizarla.*/}
       <img src={pelicula.image} className="w-full h-48 object-cover" />
       <div className="p-2">
         <h3 className="w-full font-semibold text-sm text-center">{pelicula.name}</h3>
@@ -166,20 +173,7 @@ const ComponentFilm = ({ pelicula, onEliminar, onUpdate }: { pelicula: Pelicula;
   );
 };
 
-// Botón de eliminar
-function EliminarButton({ onEliminar }: { onEliminar: () => void }) {
-  return (
-    <div className="flex justify-end">
-      <button
-        type="button"
-        onClick={onEliminar}  // Llamamos a la función eliminar cuando se hace click
-        className="absolute right-2 text-white hover:bg-blue-600 hover:text-white rounded-full p-1"
-      >
-        X
-      </button>
-    </div>
-  );
-}
+
 
 // Botón de actualizar
 function UpdateButton({ onClick }: { onClick: () => void }) {
