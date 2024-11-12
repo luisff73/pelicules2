@@ -21,10 +21,10 @@ function App() {
         <FormNewFilm 
           setPeliculas={setPeliculas} 
           peliculaSeleccionada={peliculaSeleccionada} // Le pasamos la película seleccionada si está en edición
+          generoSeleccionado={generoSeleccionado} // Pasa la prop
         />
 
         <AgregarGenero setGeneros={setGeneros} crearGenero={crearGenero} />
-
 
 
         {/* Grid que muestra todos los generos */}
@@ -49,20 +49,25 @@ function App() {
 // Formulario para crear una nueva película o actualizar una existente
 // al FormnewFilm le pasamos los parametros setPeliculas y peliculaSeleccionada 
 // react.dispatch... es un tipo que describe una función que se usa para actualizar el estado en React. en este caso es un array de peliculas
-const FormNewFilm = ({ setPeliculas, peliculaSeleccionada }: { setPeliculas: React.Dispatch<React.SetStateAction<interfacePelicula[]>>; peliculaSeleccionada: interfacePelicula | null }) => {
+const FormNewFilm = ({ setPeliculas, peliculaSeleccionada, generoSeleccionado }: { setPeliculas: React.Dispatch<React.SetStateAction<interfacePelicula[]>>; peliculaSeleccionada: interfacePelicula | null; generoSeleccionado: interfaceGeneros | null }) => {
   
   const [name, setName] = useState(peliculaSeleccionada ? peliculaSeleccionada.name : "");  // Estado para el nombre
   const [year, setYear] = useState(peliculaSeleccionada ? peliculaSeleccionada.year.toString() : "");  // Estado para el año, lo convertimos a string
   const [filmPoster, setFilmPoster] = useState(peliculaSeleccionada ? peliculaSeleccionada.image : "");  // Estado para el poster de la película
-
+  const [genero, setGenero] = useState(peliculaSeleccionada ? peliculaSeleccionada.genero : "");  // Estado para el genero de la película
+ 
   // Usamos useEffect para actualizar los campos cuando cambie la película seleccionada
   useEffect(() => {
     if (peliculaSeleccionada) {
       setName(peliculaSeleccionada.name);
       setYear(peliculaSeleccionada.year.toString());
       setFilmPoster(peliculaSeleccionada.image);
+      setGenero(peliculaSeleccionada.genero);
     }
-  }, [peliculaSeleccionada]);  // Esto se ejecutará cada vez que cambie peliculaSeleccionada
+    if (generoSeleccionado) {
+      setGenero(generoSeleccionado.name); // Actualiza el campo "Género"
+    }
+  }, [peliculaSeleccionada, generoSeleccionado]);  // Esto se ejecutará cada vez que cambie peliculaSeleccionada
 
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -70,15 +75,16 @@ const FormNewFilm = ({ setPeliculas, peliculaSeleccionada }: { setPeliculas: Rea
 
     
     if (peliculaSeleccionada) { // Si tenemos una película seleccionada, la actualizamos
-      actualizarPelicula(peliculaSeleccionada.id, name, year, filmPoster, setPeliculas);
+      actualizarPelicula(peliculaSeleccionada.id, name, year, filmPoster, genero, setPeliculas);
     } else {
-      crearPelicula(name, year, filmPoster, setPeliculas);  // Si no, creamos una nueva
+      crearPelicula(name, year, filmPoster, genero, setPeliculas);  // Si no, creamos una nueva
     }
 
     // Limpiar los campos del formulario después de enviar
     setName("");
     setYear("");
     setFilmPoster("");
+    setGenero("");
   };
 
   return (
@@ -114,6 +120,17 @@ const FormNewFilm = ({ setPeliculas, peliculaSeleccionada }: { setPeliculas: Rea
           type="text"
           value={filmPoster}
           onChange={(e) => setFilmPoster(e.target.value)}  // Actualizamos la URL del poster con el valor del input
+          className="p-2 border border-gray-300 rounded-md w-full"
+        />
+      </label>
+
+      <label className="flex flex-col">
+        Genero:
+        <input
+          type="text"
+          value={genero}
+          readOnly // Solo se puede modificar con el click del boton del genero
+          onChange={(e) => setGenero(e.target.value)}  // Actualizamos la URL del genero con el valor del input
           className="p-2 border border-gray-300 rounded-md w-full"
         />
       </label>
@@ -172,7 +189,6 @@ const GridFilms = ({ peliculas, setPeliculas, setPeliculaSeleccionada }: { pelic
 };
 
 // Función para crear un nuevo género
-
 const crearGenero = (name: string, setGeneros: React.Dispatch<React.SetStateAction<interfaceGeneros[]>>) => {
   const nuevoGenero = { name };
 
@@ -220,12 +236,6 @@ const AgregarGenero = ({ setGeneros, crearGenero }: { setGeneros: React.Dispatch
 
 
 
-
-
-
-
-
-
 // Componente que muestra la lista de Generos
 const GridFilmsGeneros = ({ generos, setGeneros, setGeneroSeleccionado }: { generos: interfaceGeneros[]; setGeneros: React.Dispatch<React.SetStateAction<interfaceGeneros[]>>; setGeneroSeleccionado: React.Dispatch<React.SetStateAction<interfaceGeneros | null>> }) => {
 
@@ -262,6 +272,7 @@ const GridFilmsGeneros = ({ generos, setGeneros, setGeneroSeleccionado }: { gene
           key={genero.id}  // Necesario para que React reconozca los elementos únicos
           generos={genero}  // Usamos el nombre singular para la iteración
           onEliminar={() => eliminarGeneros(genero.id)}  // Llamamos a la función eliminarGenero
+          onSelectGenero={setGeneroSeleccionado} // Pasa la función como prop
         />
       ))}
     </div>
@@ -281,6 +292,7 @@ const ComponentFilm = ({ pelicula, onEliminar, onUpdate }: { pelicula: interface
       <div className="p-2">
         <h3 className="w-full font-semibold text-sm text-center">{pelicula.name}</h3>
         <p className="text-gray-500 text-center">{pelicula.year}</p>
+        <p className="text-gray-500 text-center">{pelicula.genero}</p>
         <UpdateButton onClick={onUpdate}   />
       </div>
     </div>
@@ -288,15 +300,9 @@ const ComponentFilm = ({ pelicula, onEliminar, onUpdate }: { pelicula: interface
 };
 
 
-const ComponentGeneros = ({
-  generos,
-  onEliminar,
-}: {
-  generos: interfaceGeneros;
-  onEliminar: () => void;
-}) => {
+const ComponentGeneros = ({generos,onEliminar, onSelectGenero}: {generos: interfaceGeneros;onEliminar: () => void; onSelectGenero: (genero: interfaceGeneros) => void;}) => {
   return (
-    <div className="bg-white rounded-md shadow-md overflow-hidden relative">
+    <div className="bg-white rounded-md shadow-md overflow-hidden relative" onClick={() => onSelectGenero(generos)}> 
       <EliminarButton onEliminar={onEliminar} />
       <div className="p-2">
         <h3 className="w-full font-semibold text-sm text-center">{generos.name}</h3>
@@ -319,11 +325,12 @@ function UpdateButton({ onClick }: { onClick: () => void }) {
 }
 
 // Función para crear una nueva película
-const crearPelicula = (name: string, year: string, filmPoster: string, setPeliculas: React.Dispatch<React.SetStateAction<interfacePelicula[]>>) => {
+const crearPelicula = (name: string, year: string, filmPoster: string, genero: string, setPeliculas: React.Dispatch<React.SetStateAction<interfacePelicula[]>>) => {
   const nuevaPelicula = {
     name,
     year: parseInt(year),  // Convertimos el año a número
     image: filmPoster,  // URL del poster
+    genero: genero,
   };
 
   // Realizamos la solicitud POST para crear la nueva película
@@ -343,10 +350,12 @@ const crearPelicula = (name: string, year: string, filmPoster: string, setPelicu
 
 // Función para actualizar una película
 const actualizarPelicula = (
-  id: number,
+  id
+: number,
   name: string,
   year: string,
   filmPoster: string,
+  filmGenero: string,
   setPeliculas: React.Dispatch<React.SetStateAction<interfacePelicula[]>>
 ) => {
   const updatedPelicula = {
@@ -354,6 +363,7 @@ const actualizarPelicula = (
     name,
     year: parseInt(year),  // Convertimos el año a número
     image: filmPoster,
+    genero: filmGenero,
   };
 
   // Realizamos la solicitud PUT para actualizar la película
@@ -381,6 +391,7 @@ interface interfacePelicula {
   image: string;
   name: string;
   year: number;
+  genero: string;
 }
 
 interface interfaceGeneros {
