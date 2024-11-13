@@ -3,6 +3,7 @@ import ComponentGeneros from './ComponentGeneros.tsx';
 import { interfaceGeneros } from './App';
 
 // Componente que muestra la lista de Generos
+//                         (propiedades que recibe)                           array interfaceGeneros             funcion de react que actualiza el estado de los generos                     asignamos setgeneroseleccionado a null
 const GridFilmsGeneros = ({ generos, setGeneros, setGeneroSeleccionado }: { generos: interfaceGeneros[]; setGeneros: React.Dispatch<React.SetStateAction<interfaceGeneros[]>>; setGeneroSeleccionado: React.Dispatch<React.SetStateAction<interfaceGeneros | null>> }) => {
 
     // useEffect se usa para cargar las películas cuando el componente se monta
@@ -34,7 +35,7 @@ const GridFilmsGeneros = ({ generos, setGeneros, setGeneroSeleccionado }: { gene
             key={genero.id}  // Necesario para que React reconozca los elementos únicos
             generos={genero}  // Usamos el nombre singular para la iteración
             onEliminar={() => eliminarGeneros(genero.id)}  // Llamamos a la función eliminarGenero
-            onSelectGenero={setGeneroSeleccionado} // Pasa la función como prop
+            onSelectGenero={setGeneroSeleccionado} // Pasa la función como prop/propiedad
           />
         ))}
       </div>
